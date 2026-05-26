@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoCampus — Live System</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e2e0d8;--border2:#cccab8;
+  --text:#1a1916;--muted:#7a7868;--accent:#2563eb;--accent-light:#eff4ff;
+  --green:#16a34a;--green-light:#f0fdf4;--amber:#d97706;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;--purple:#7c3aed;--purple-light:#f5f3ff;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;}
+input,select,textarea{font-family:'DM Sans',sans-serif;}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--shadow-md);}
+.login-logo{font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-0.5px;}
+.login-logo span{color:var(--accent);}
+.login-sub{color:var(--muted);font-size:13px;margin-bottom:32px;}
+.login-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;}
+.login-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-field{margin-bottom:16px;}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;margin-top:8px;transition:opacity .2s;}
+.login-btn:hover{opacity:.9;}
+.login-error{background:#fef2f2;border:1px solid #fecaca;color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none;}
+
+/* APP SHELL */
+#appShell{display:none;height:100vh;overflow:hidden;}
+.shell{display:flex;height:100%;}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-logo{padding:20px 20px 16px;font-size:16px;font-weight:600;letter-spacing:-0.3px;border-bottom:1px solid var(--border);}
+.sidebar-logo span{color:var(--accent);}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid var(--border);}
+.sidebar-user-name{font-size:13px;font-weight:500;}
+.sidebar-user-role{font-size:11px;color:var(--muted);text-transform:capitalize;}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.nav-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:8px 10px 4px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-light);color:var(--accent);}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.sidebar-bottom{padding:12px 8px;border-top:1px solid var(--border);}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;width:100%;background:none;border:none;transition:all .15s;}
+.logout-btn:hover{background:var(--red-light);color:var(--red);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-title{font-size:16px;font-weight:600;letter-spacing:-0.3px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.notif-btn{position:relative;background:none;border:none;padding:6px;color:var(--muted);font-size:18px;border-radius:8px;transition:all .15s;}
+.notif-btn:hover{background:var(--surface2);color:var(--text);}
+.notif-badge{position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--surface);}
+.page-content{flex:1;padding:28px;}
+
+/* CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);}
+.stat-label{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.stat-value{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* TABLE */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px;}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-title{font-size:14px;font-weight:600;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border);}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.empty-row td{text-align:center;color:var(--muted);padding:32px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize;}
+.badge-pending{background:var(--amber-light);color:var(--amber);}
+.badge-approved{background:var(--green-light);color:var(--green);}
+.badge-rejected{background:var(--red-light);color:var(--red);}
+.badge-completed{background:var(--purple-light);color:var(--purple);}
+.badge-assigned{background:var(--accent-light);color:var(--accent);}
+.badge-accepted{background:var(--green-light);color:var(--green);}
+.badge-declined{background:var(--red-light);color:var(--red);}
+.badge-high{background:var(--red-light);color:var(--red);}
+.badge-urgent{background:#fff1f2;color:#e11d48;}
+.badge-medium{background:var(--amber-light);color:var(--amber);}
+.badge-low{background:var(--green-light);color:var(--green);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;border:none;transition:all .15s;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{opacity:.9;}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:hover{opacity:.9;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{opacity:.9;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{background:var(--surface2);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* FORM */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow);max-width:700px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.form-input{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--accent);}
+.form-actions{margin-top:20px;display:flex;gap:10px;}
+.form-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.section-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.modal-actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end;}
+
+/* NOTIFICATION PANEL */
+.notif-panel{position:fixed;top:0;right:0;width:340px;height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-md);z-index:500;transform:translateX(100%);transition:transform .25s;overflow-y:auto;}
+.notif-panel.open{transform:translateX(0);}
+.notif-panel-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-panel-title{font-size:15px;font-weight:600;}
+.notif-item{padding:14px 20px;border-bottom:1px solid var(--border);transition:background .15s;}
+.notif-item:hover{background:var(--surface2);}
+.notif-item.unread{background:var(--accent-light);}
+.notif-item-title{font-size:13px;font-weight:500;margin-bottom:3px;}
+.notif-item-msg{font-size:12px;color:var(--muted);}
+.notif-item-time{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--muted);font-size:13px;gap:10px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+
+/* UTIL */
+.flex{display:flex;}.gap-2{gap:8px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+.mt-1{margin-top:4px;}.mt-2{margin-top:8px;}.mt-4{margin-top:16px;}.mb-4{margin-bottom:16px;}
+.text-muted{color:var(--muted);font-size:12px;}
+.action-btns{display:flex;gap:6px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Photo<span>Campus</span></div>
+    <div class="login-sub">Event Photographer Management System</div>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" id="loginEmail" placeholder="your@email.com">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="loginBtn">Sign In</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Demo accounts</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+        Admin: admin@campus.com / Admin@1234<br>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">Photo<span>Campus</span></div>
+      <div class="sidebar-user">
+        <div class="sidebar-user-name" id="sidebarName">—</div>
+        <div class="sidebar-user-role" id="sidebarRole">—</div>
+      </div>
+      <div class="sidebar-nav" id="sidebarNav"></div>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" onclick="doLogout()">⬡ Sign out</button>
+      </div>
+    </div>
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <div class="topbar-right">
+          <button class="notif-btn" onclick="toggleNotifPanel()" id="notifBtn">
+            🔔<span class="notif-badge" id="notifBadge" style="display:none"></span>
+          </button>
+        </div>
+      </div>
+      <div class="page-content" id="pageContent">
+        <!-- pages rendered here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header">
+    <div class="notif-panel-title">Notifications</div>
+    <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+  </div>
+  <div id="notifList"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SUPABASE INIT ──────────────────────────────────────────
+const SUPABASE_URL = 'https://tksxucpralprpivowoscl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrc3h1Y3ByYWxwcnBpdm93b3NjbCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc5NzU2NTIyLCJleHAiOjIwOTUzMzI1MjJ9.0ebU1IUEykt-qxjw5zMkwvto3gG3vEbuWYOvYzBPXWM';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// ── AUTH ───────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !pass) { showErr('Please enter email and password.'); return; }
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  const { data, error } = await db.from('users')
+    .select('*').eq('email', email).eq('password_hash', pass).eq('is_active', true).single();
+  btn.textContent = 'Sign In'; btn.disabled = false;
+  if (error || !data) { showErr('Invalid email or password.'); return; }
+  currentUser = data;
+  localStorage.setItem('campus_user', JSON.stringify(data));
+  launchApp();
+}
+function showErr(msg) {
+  const e = document.getElementById('loginError');
+  e.textContent = msg; e.style.display = 'block';
+}
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('campus_user');
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+function launchApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  document.getElementById('sidebarName').textContent = currentUser.full_name;
+  document.getElementById('sidebarRole').textContent = currentUser.role;
+  buildSidebar();
+  loadNotifications();
+  navigateTo('dashboard');
+}
+
+// ── SIDEBAR ────────────────────────────────────────────────
+const NAV = {
+  admin: [
+    { id:'dashboard', icon:'📊', label:'Dashboard' },
+    { id:'requests',  icon:'📋', label:'All Requests' },
+    { id:'assign',    icon:'📸', label:'Assign Photographers' },
+    { id:'employees', icon:'👥', label:'Employees' },
+    { id:'campuses',  icon:'🏛️', label:'Campuses' },
+    { id:'reports',   icon:'📈', label:'Reports' },
+  ],
+  coordinator: [
+    { id:'dashboard',    icon:'📊', label:'Dashboard' },
+    { id:'new-request',  icon:'➕', label:'New Request' },
+    { id:'my-requests',  icon:'📋', label:'My Requests' },
+  ],
+  photographer: [
+    { id:'dashboard',   icon:'📊', label:'Dashboard' },
+    { id:'assignments', icon:'📸', label:'My Assignments' },
+    { id:'schedule',    icon:'📅', label:'My Schedule' },
+  ],
+};
+function buildSidebar() {
+  const items = NAV[currentUser.role] || [];
+  document.getElementById('sidebarNav').innerHTML = items.map(n =>
+    `<div class="nav-item" id="nav-${n.id}" onclick="navigateTo('${n.id}')">
+      <span class="nav-icon">${n.icon}</span>${n.label}
+    </div>`).join('');
+}
+function navigateTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('nav-'+page);
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', requests:'All Requests', assign:'Assign Photographers',
+    employees:'Employees', campuses:'Campuses', reports:'Reports',
+    'new-request':'New Event Request', 'my-requests':'My Requests',
+    assignments:'My Assignments', schedule:'My Schedule'
+  };
+  document.getElementById('topbarTitle').textContent = titles[page] || page;
+  renderPage(page);
+}
+
+// ── ROUTER ─────────────────────────────────────────────────
+async function renderPage(page) {
+  const c = document.getElementById('pageContent');
+  c.innerHTML = `<div class="loading"><div class="spinner"></div>Loading…</div>`;
+  if (page === 'dashboard')      await renderDashboard(c);
+  else if (page === 'requests')  await renderRequests(c);
+  else if (page === 'assign')    await renderAssign(c);
+  else if (page === 'employees') await renderEmployees(c);
+  else if (page === 'campuses')  await renderCampuses(c);
+  else if (page === 'reports')   await renderReports(c);
+  else if (page === 'new-request') renderNewRequest(c);
+  else if (page === 'my-requests') await renderMyRequests(c);
+  else if (page === 'assignments') await renderAssignments(c);
+  else if (page === 'schedule')    await renderSchedule(c);
+  else c.innerHTML = '<div class="loading">Page not found.</div>';
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+async function renderDashboard(c) {
+  if (currentUser.role === 'admin') {
+    const [reqRes, empRes, campRes, assignRes] = await Promise.all([
+      db.from('event_requests').select('status'),
+      db.from('users').select('id').eq('role','photographer').eq('is_active',true),
+      db.from('campuses').select('id'),
+      db.from('assignments').select('status'),
+    ]);
+    const reqs = reqRes.data || [];
+    const pending   = reqs.filter(r=>r.status==='pending').length;
+    const approved  = reqs.filter(r=>r.status==='approved').length;
+    const completed = reqs.filter(r=>r.status==='completed').length;
+    const photographers = (empRes.data||[]).length;
+    const campuses = (campRes.data||[]).length;
+    const assigned = (assignRes.data||[]).filter(a=>a.status==='assigned'||a.status==='accepted').length;
+    c.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value" style="color:var(--amber)">${pending}</div><div class="stat-sub">Awaiting review</div></div>
+        <div class="stat-card"><div class="stat-label">Approved Events</div><div class="stat-value" style="color:var(--green)">${approved}</div><div class="stat-sub">Ready to assign</div></div>
+        <div class="stat-card"><div class="stat-label">Completed Events</div><div class="stat-value" style="color:var(--purple)">${completed}</div><div class="stat-sub">This month</div></div>
+        <div class="stat-card"><div class="stat-label">Active Photographers</div><div class="stat-value" style="color:var(--accent)">${photographers}</div><div class="stat-sub">Available staff</div></div>
+        <div class="stat-card"><div class="stat-label">Campuses</div><div class="stat-value">${campuses}</div><div class="stat-sub">Registered</div></div>
+        <div class="stat-card"><div class="stat-label">Active Assignments</div><div class="stat-value" style="color:var(--accent)">${assigned}</div><div class="stat-sub">In progress</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Recent Requests</div>
+          <button class="btn btn-primary btn-sm" onclick="navigateTo('requests')">View All</button>
+        </div>
+        <div id="dashRecentReqs"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+      </div>`;
+    const { data: recent } = await db.from('event_requests')
+      .select('*, campuses(name), users!event_requests_requested_by_fkey(full_name)')
+      .order('created_at',{ascending:false}).limit(5);
+    renderRequestTable(document.getElementById('dashRecentReqs'), recent||[], false);
+  } else if (currentUser.role === 'coordinator') {
+    const { data: reqs } = await db.from('event_requests')
+      .select('status').eq('requested_by', currentUser.id);
+    const all = reqs||[];
+    c.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value">${all.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${all.filter(r=>r.status==='pending').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--green)">${all.filter(r=>r.status==='approved').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${all.filter(r=>r.status==='completed').length}</div></div>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="navigateTo('new-request')">➕ Submit New Request</button>
+      </div>`;
+  } else if (currentUser.role === 'photographer') {
+    const { data: assigns } = await db.from('assignments')
+      .select('status, event_requests(event_name,event_date,status)')
+      .eq('photographer_id', currentUser.id);
+    const all = assigns||[];
+    c.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Assignments</div><div class="stat-value">${all.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Response</div><div class="stat-value" style="color:var(--amber)">${all.filter(a=>a.status==='assigned').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value" style="color:var(--green)">${all.filter(a=>a.status==='accepted').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${all.filter(a=>a.status==='completed').length}</div></div>
+      </div>`;
+  }
+}
+
+// ── REQUESTS (ADMIN) ───────────────────────────────────────
+async function renderRequests(c) {
+  const { data } = await db.from('event_requests')
+    .select('*, campuses(name), users!event_requests_requested_by_fkey(full_name)')
+    .order('created_at',{ascending:false});
+  c.innerHTML = `
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Event Requests</div>
+        <div class="flex gap-2">
+          <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="filterRequests(this.value)">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+      <div id="reqTableWrap"></div>
+    </div>`;
+  window._allRequests = data||[];
+  renderRequestTable(document.getElementById('reqTableWrap'), data||[], true);
+}
+function filterRequests(status) {
+  const filtered = status ? window._allRequests.filter(r=>r.status===status) : window._allRequests;
+  renderRequestTable(document.getElementById('reqTableWrap'), filtered, true);
+}
+function renderRequestTable(container, rows, showActions) {
+  if (!rows.length) { container.innerHTML = '<table><tr class="empty-row"><td colspan="7">No requests found.</td></tr></table>'; return; }
+  container.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Event</th><th>Campus</th><th>Date</th><th>Priority</th><th>Status</th><th>Requested By</th>${showActions?'<th>Actions</th>':''}
+    </tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><div style="font-weight:500">${r.event_name}</div><div class="text-muted">${r.event_type||''}</div></td>
+      <td>${r.campuses?.name||'—'}</td>
+      <td>${r.event_date} <div class="text-muted">${r.start_time?.slice(0,5)}–${r.end_time?.slice(0,5)}</div></td>
+      <td><span class="badge badge-${r.priority}">${r.priority}</span></td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td>${r.users?.full_name||'—'}</td>
+      ${showActions && r.status==='pending' ? `<td><div class="action-btns">
+        <button class="btn btn-success btn-sm" onclick="updateRequestStatus('${r.id}','approved')">Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="updateRequestStatus('${r.id}','rejected')">Reject</button>
+      </div></td>` : showActions ? `<td><span class="text-muted">—</span></td>` : ''}
+    </tr>`).join('')}
+    </tbody></table></div>`;
+}
+async function updateRequestStatus(id, status) {
+  const { error } = await db.from('event_requests').update({status}).eq('id',id);
+  if (error) { showToast('Error updating request','error'); return; }
+  showToast(`Request ${status} successfully`,'success');
+  await renderRequests(document.getElementById('pageContent'));
+  // notify coordinator
+  const { data: req } = await db.from('event_requests').select('requested_by,event_name').eq('id',id).single();
+  if (req) {
+    await db.from('notifications').insert({
+      user_id: req.requested_by,
+      title: `Request ${status}`,
+      message: `Your request "${req.event_name}" has been ${status} by the admin.`
+    });
+  }
+}
+
+// ── ASSIGN (ADMIN) ─────────────────────────────────────────
+async function renderAssign(c) {
+  const [{ data: reqs }, { data: photographers }] = await Promise.all([
+    db.from('event_requests')
+      .select('*, campuses(name)')
+      .eq('status','approved')
+      .order('event_date'),
+    db.from('users').select('*').eq('role','photographer').eq('is_active',true)
+  ]);
+  c.innerHTML = `
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Approved Events — Assign Photographers</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Event</th><th>Campus</th><th>Date & Time</th><th>Need</th><th>Assign</th></tr></thead>
+        <tbody>${(reqs||[]).length ? (reqs||[]).map(r=>`<tr>
+          <td><div style="font-weight:500">${r.event_name}</div><div class="text-muted">${r.venue||''}</div></td>
+          <td>${r.campuses?.name||'—'}</td>
+          <td>${r.event_date}<div class="text-muted">${r.start_time?.slice(0,5)}–${r.end_time?.slice(0,5)}</div></td>
+          <td>${r.photographers_needed}</td>
+          <td>
+            <select class="form-input" id="assign-sel-${r.id}" style="padding:5px 8px;font-size:12px;min-width:160px;">
+              <option value="">Select photographer</option>
+              ${(photographers||[]).map(p=>`<option value="${p.id}">${p.full_name}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary btn-sm" style="margin-top:4px;" onclick="doAssign('${r.id}')">Assign</button>
+          </td>
+        </tr>`).join('') : '<tr class="empty-row"><td colspan="5">No approved events pending assignment.</td></tr>'
+        }</tbody>
+      </table></div>
+    </div>
+    <div class="table-card" style="margin-top:0">
+      <div class="table-header"><div class="table-title">Existing Assignments</div></div>
+      <div id="existingAssigns"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>`;
+  const { data: assigns } = await db.from('assignments')
+    .select('*, users!assignments_photographer_id_fkey(full_name), event_requests(event_name,event_date)')
+    .order('created_at',{ascending:false}).limit(20);
+  const ea = document.getElementById('existingAssigns');
+  if (!(assigns||[]).length) { ea.innerHTML='<div class="loading">No assignments yet.</div>'; return; }
+  ea.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Event</th><th>Photographer</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>${(assigns||[]).map(a=>`<tr>
+      <td>${a.event_requests?.event_name||'—'}</td>
+      <td>${a.users?.full_name||'—'}</td>
+      <td>${a.event_requests?.event_date||'—'}</td>
+      <td><span class="badge badge-${a.status}">${a.status}</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+async function doAssign(requestId) {
+  const sel = document.getElementById('assign-sel-'+requestId);
+  const photographerId = sel.value;
+  if (!photographerId) { showToast('Please select a photographer','error'); return; }
+  // conflict check
+  const { data: req } = await db.from('event_requests').select('*').eq('id',requestId).single();
+  const { data: conflicts } = await db.from('assignments')
+    .select('*, event_requests(event_date,start_time,end_time)')
+    .eq('photographer_id',photographerId)
+    .neq('status','declined');
+  const hasConflict = (conflicts||[]).some(a => {
+    const er = a.event_requests;
+    if (!er || er.event_date !== req.event_date) return false;
+    return er.start_time < req.end_time && er.end_time > req.start_time;
+  });
+  if (hasConflict) { showToast('⚠️ Conflict! Photographer already assigned on this date/time','error'); return; }
+  const { error } = await db.from('assignments').insert({
+    request_id: requestId, photographer_id: photographerId, assigned_by: currentUser.id
+  });
+  if (error) { showToast('Error creating assignment','error'); return; }
+  // notify photographer
+  const { data: photo } = await db.from('users').select('full_name').eq('id',photographerId).single();
+  await db.from('notifications').insert({
+    user_id: photographerId,
+    title: 'New Assignment',
+    message: `You have been assigned to "${req.event_name}" on ${req.event_date}.`
+  });
+  showToast(`${photo?.full_name} assigned successfully`,'success');
+  await renderAssign(document.getElementById('pageContent'));
+}
+
+// ── EMPLOYEES (ADMIN) ──────────────────────────────────────
+async function renderEmployees(c) {
+  const { data } = await db.from('users').select('*').neq('role','admin').order('created_at',{ascending:false});
+  c.innerHTML = `
+    <div style="margin-bottom:16px;display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="showAddEmployeeModal()">➕ Add Employee</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Employees</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>${(data||[]).length ? (data||[]).map(u=>`<tr>
+          <td style="font-weight:500">${u.full_name}</td>
+          <td>${u.email}</td>
+          <td><span class="badge badge-${u.role==='photographer'?'assigned':'approved'}">${u.role}</span></td>
+          <td>${u.phone||'—'}</td>
+          <td><span class="badge badge-${u.is_active?'approved':'rejected'}">${u.is_active?'Active':'Inactive'}</span></td>
+          <td><button class="btn btn-ghost btn-sm" onclick="toggleUserActive('${u.id}',${u.is_active})">${u.is_active?'Deactivate':'Activate'}</button></td>
+        </tr>`).join('') : '<tr class="empty-row"><td colspan="6">No employees yet. Add your first one!</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+function showAddEmployeeModal() {
+  const m = document.createElement('div');
+  m.className = 'modal-overlay';
+  m.id = 'addEmpModal';
+  m.innerHTML = `<div class="modal">
+    <div class="modal-title">Add New Employee</div>
+    <div class="form-group mb-4"><label class="form-label">Full Name</label><input class="form-input" id="empName" placeholder="Full name"></div>
+    <div class="form-group mb-4"><label class="form-label">Email</label><input class="form-input" id="empEmail" type="email" placeholder="email@campus.com"></div>
+    <div class="form-group mb-4"><label class="form-label">Password</label><input class="form-input" id="empPass" type="password" placeholder="Set a password"></div>
+    <div class="form-group mb-4"><label class="form-label">Role</label>
+      <select class="form-input" id="empRole">
+        <option value="photographer">Photographer</option>
+        <option value="coordinator">Campus Coordinator</option>
+      </select>
+    </div>
+    <div class="form-group mb-4"><label class="form-label">Phone (optional)</label><input class="form-input" id="empPhone" placeholder="Phone number"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('addEmpModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Add Employee</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function saveEmployee() {
+  const name=document.getElementById('empName').value.trim();
+  const email=document.getElementById('empEmail').value.trim();
+  const pass=document.getElementById('empPass').value.trim();
+  const role=document.getElementById('empRole').value;
+  const phone=document.getElementById('empPhone').value.trim();
+  if (!name||!email||!pass) { showToast('Name, email and password are required','error'); return; }
+  const { error } = await db.from('users').insert({ full_name:name, email, password_hash:pass, role, phone:phone||null });
+  if (error) { showToast(error.message||'Error adding employee','error'); return; }
+  document.getElementById('addEmpModal').remove();
+  showToast('Employee added successfully','success');
+  await renderEmployees(document.getElementById('pageContent'));
+}
+async function toggleUserActive(id, current) {
+  await db.from('users').update({is_active:!current}).eq('id',id);
+  showToast(`User ${current?'deactivated':'activated'}`,'success');
+  await renderEmployees(document.getElementById('pageContent'));
+}
+
+// ── CAMPUSES (ADMIN) ───────────────────────────────────────
+async function renderCampuses(c) {
+  const { data } = await db.from('campuses').select('*').order('created_at',{ascending:false});
+  c.innerHTML = `
+    <div style="margin-bottom:16px;display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="showAddCampusModal()">➕ Add Campus</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Campuses (${(data||[]).length})</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Campus Name</th><th>Location</th><th>Actions</th></tr></thead>
+        <tbody>${(data||[]).length ? (data||[]).map(camp=>`<tr>
+          <td style="font-weight:500">${camp.name}</td>
+          <td>${camp.location||'—'}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="deleteCampus('${camp.id}')">Delete</button></td>
+        </tr>`).join('') : '<tr class="empty-row"><td colspan="3">No campuses added yet.</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+function showAddCampusModal() {
+  const m = document.createElement('div');
+  m.className='modal-overlay'; m.id='addCampModal';
+  m.innerHTML=`<div class="modal">
+    <div class="modal-title">Add New Campus</div>
+    <div class="form-group mb-4"><label class="form-label">Campus Name</label><input class="form-input" id="campName" placeholder="e.g. Main Campus"></div>
+    <div class="form-group mb-4"><label class="form-label">Location / City</label><input class="form-input" id="campLoc" placeholder="e.g. Mumbai"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('addCampModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCampus()">Add Campus</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function saveCampus() {
+  const name=document.getElementById('campName').value.trim();
+  const loc=document.getElementById('campLoc').value.trim();
+  if (!name) { showToast('Campus name is required','error'); return; }
+  const { error } = await db.from('campuses').insert({name, location:loc||null});
+  if (error) { showToast('Error adding campus','error'); return; }
+  document.getElementById('addCampModal').remove();
+  showToast('Campus added successfully','success');
+  await renderCampuses(document.getElementById('pageContent'));
+}
+async function deleteCampus(id) {
+  if (!confirm('Delete this campus?')) return;
+  await db.from('campuses').delete().eq('id',id);
+  showToast('Campus deleted','success');
+  await renderCampuses(document.getElementById('pageContent'));
+}
+
+// ── REPORTS (ADMIN) ────────────────────────────────────────
+async function renderReports(c) {
+  const [reqRes, assignRes, campRes, empRes] = await Promise.all([
+    db.from('event_requests').select('status,event_date,campuses(name)'),
+    db.from('assignments').select('status,photographer_id,users!assignments_photographer_id_fkey(full_name)'),
+    db.from('campuses').select('id,name'),
+    db.from('users').select('id,full_name').eq('role','photographer'),
+  ]);
+  const reqs = reqRes.data||[];
+  const assigns = assignRes.data||[];
+  const total=reqs.length, pending=reqs.filter(r=>r.status==='pending').length,
+        approved=reqs.filter(r=>r.status==='approved').length,
+        completed=reqs.filter(r=>r.status==='completed').length,
+        rejected=reqs.filter(r=>r.status==='rejected').length;
+  const campStats = {};
+  reqs.forEach(r=>{ const n=r.campuses?.name||'Unknown'; campStats[n]=(campStats[n]||0)+1; });
+  const empStats = {};
+  assigns.forEach(a=>{ const n=a.users?.full_name||'Unknown'; empStats[n]=(empStats[n]||0)+1; });
+  c.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--green)">${approved}</div></div>
+      <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${completed}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" style="color:var(--red)">${rejected}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Assignments</div><div class="stat-value" style="color:var(--accent)">${assigns.length}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:4px;">
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Requests by Campus</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Campus</th><th>Total Requests</th></tr></thead>
+          <tbody>${Object.entries(campStats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')||'<tr class="empty-row"><td colspan="2">No data yet.</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Assignments by Photographer</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Photographer</th><th>Total Assignments</th></tr></thead>
+          <tbody>${Object.entries(empStats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')||'<tr class="empty-row"><td colspan="2">No assignments yet.</td></tr>'}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+// ── NEW REQUEST (COORDINATOR) ──────────────────────────────
+function renderNewRequest(c) {
+  c.innerHTML=`<div class="form-card">
+    <div class="form-title">Submit New Event Request</div>
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Event Name *</label><input class="form-input" id="evName" placeholder="e.g. Annual Sports Day"></div>
+      <div class="form-group"><label class="form-label">Event Type</label>
+        <select class="form-input" id="evType">
+          <option>Sports</option><option>Cultural</option><option>Academic</option><option>Seminar</option><option>Convocation</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-input" id="evPriority">
+          <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Event Date *</label><input class="form-input" id="evDate" type="date"></div>
+      <div class="form-group"><label class="form-label">Start Time *</label><input class="form-input" id="evStart" type="time"></div>
+      <div class="form-group"><label class="form-label">End Time *</label><input class="form-input" id="evEnd" type="time"></div>
+      <div class="form-group"><label class="form-label">Venue / Location</label><input class="form-input" id="evVenue" placeholder="e.g. Main Auditorium"></div>
+      <div class="form-group"><label class="form-label">Photographers Needed</label><input class="form-input" id="evCount" type="number" min="1" max="10" value="1"></div>
+      <div class="form-group full"><label class="form-label">Additional Notes</label><textarea class="form-input" id="evNotes" rows="3" placeholder="Any special requirements…"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitRequest()">Submit Request</button>
+      <button class="btn btn-ghost" onclick="navigateTo('dashboard')">Cancel</button>
+    </div>
+  </div>`;
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('evDate').setAttribute('min', today);
+}
+async function submitRequest() {
+  const name=document.getElementById('evName').value.trim();
+  const date=document.getElementById('evDate').value;
+  const start=document.getElementById('evStart').value;
+  const end=document.getElementById('evEnd').value;
+  if (!name||!date||!start||!end) { showToast('Please fill all required fields','error'); return; }
+  if (start>=end) { showToast('End time must be after start time','error'); return; }
+  // get or create a campus for this coordinator
+  let campusId = currentUser.campus_id;
+  if (!campusId) {
+    // use first available campus or null
+    const { data: camps } = await db.from('campuses').select('id').limit(1);
+    campusId = camps?.[0]?.id || null;
+  }
+  const { error } = await db.from('event_requests').insert({
+    event_name: name,
+    event_type: document.getElementById('evType').value,
+    priority: document.getElementById('evPriority').value,
+    event_date: date,
+    start_time: start,
+    end_time: end,
+    venue: document.getElementById('evVenue').value.trim()||null,
+    photographers_needed: parseInt(document.getElementById('evCount').value)||1,
+    notes: document.getElementById('evNotes').value.trim()||null,
+    requested_by: currentUser.id,
+    campus_id: campusId,
+    status: 'pending'
+  });
+  if (error) { showToast('Error submitting request: '+error.message,'error'); return; }
+  // notify admin
+  const { data: admins } = await db.from('users').select('id').eq('role','admin');
+  if (admins) {
+    for (const admin of admins) {
+      await db.from('notifications').insert({
+        user_id: admin.id, title: 'New Event Request',
+        message: `${currentUser.full_name} submitted a new request: "${name}"`
+      });
+    }
+  }
+  showToast('Request submitted successfully!','success');
+  navigateTo('my-requests');
+}
+
+// ── MY REQUESTS (COORDINATOR) ──────────────────────────────
+async function renderMyRequests(c) {
+  const { data } = await db.from('event_requests')
+    .select('*, campuses(name)')
+    .eq('requested_by', currentUser.id)
+    .order('created_at',{ascending:false});
+  c.innerHTML=`<div class="table-card">
+    <div class="table-header"><div class="table-title">My Event Requests</div>
+      <button class="btn btn-primary btn-sm" onclick="navigateTo('new-request')">➕ New Request</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Event</th><th>Date</th><th>Time</th><th>Priority</th><th>Status</th><th>Photographers</th></tr></thead>
+      <tbody>${(data||[]).length ? (data||[]).map(r=>`<tr>
+        <td><div style="font-weight:500">${r.event_name}</div><div class="text-muted">${r.event_type||''} · ${r.venue||''}</div></td>
+        <td>${r.event_date}</td>
+        <td>${r.start_time?.slice(0,5)}–${r.end_time?.slice(0,5)}</td>
+        <td><span class="badge badge-${r.priority}">${r.priority}</span></td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td>${r.photographers_needed}</td>
+      </tr>`).join('') : '<tr class="empty-row"><td colspan="6">No requests yet. Submit your first one!</td></tr>'}
+      </tbody></table></div>
+  </div>`;
+}
+
+// ── ASSIGNMENTS (PHOTOGRAPHER) ─────────────────────────────
+async function renderAssignments(c) {
+  const { data } = await db.from('assignments')
+    .select('*, event_requests(*, campuses(name))')
+    .eq('photographer_id', currentUser.id)
+    .order('created_at',{ascending:false});
+  c.innerHTML=`<div class="table-card">
+    <div class="table-header"><div class="table-title">My Assignments</div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Event</th><th>Campus</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${(data||[]).length ? (data||[]).map(a=>`<tr>
+        <td><div style="font-weight:500">${a.event_requests?.event_name||'—'}</div><div class="text-muted">${a.event_requests?.venue||''}</div></td>
+        <td>${a.event_requests?.campuses?.name||'—'}</td>
+        <td>${a.event_requests?.event_date||'—'}<div class="text-muted">${a.event_requests?.start_time?.slice(0,5)}–${a.event_requests?.end_time?.slice(0,5)}</div></td>
+        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+        <td><div class="action-btns">
+          ${a.status==='assigned'?`
+            <button class="btn btn-success btn-sm" onclick="respondAssignment('${a.id}','accepted')">Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="respondAssignment('${a.id}','declined')">Decline</button>
+          `:a.status==='accepted'?`
+            <button class="btn btn-primary btn-sm" onclick="respondAssignment('${a.id}','completed')">Mark Done</button>
+          `:'<span class="text-muted">—</span>'}
+        </div></td>
+      </tr>`).join('') : '<tr class="empty-row"><td colspan="5">No assignments yet.</td></tr>'}
+      </tbody></table></div>
+  </div>`;
+}
+async function respondAssignment(id, status) {
+  const { error } = await db.from('assignments').update({status}).eq('id',id);
+  if (error) { showToast('Error updating assignment','error'); return; }
+  // notify admin
+  const { data: assign } = await db.from('assignments')
+    .select('event_requests(event_name), users!assignments_photographer_id_fkey(full_name)')
+    .eq('id',id).single();
+  const { data: admins } = await db.from('users').select('id').eq('role','admin');
+  if (admins && assign) {
+    for (const admin of admins) {
+      await db.from('notifications').insert({
+        user_id: admin.id, title: `Assignment ${status}`,
+        message: `${assign.users?.full_name} ${status} the assignment for "${assign.event_requests?.event_name}"`
+      });
+    }
+  }
+  showToast(`Assignment marked as ${status}`,'success');
+  await renderAssignments(document.getElementById('pageContent'));
+}
+
+// ── SCHEDULE (PHOTOGRAPHER) ────────────────────────────────
+async function renderSchedule(c) {
+  const { data } = await db.from('assignments')
+    .select('*, event_requests(*, campuses(name))')
+    .eq('photographer_id', currentUser.id)
+    .in('status',['accepted','assigned'])
+    .order('created_at');
+  const upcoming = (data||[]).filter(a=>a.event_requests?.event_date >= new Date().toISOString().slice(0,10));
+  c.innerHTML=`<div class="section-title">Upcoming Schedule</div>
+    ${upcoming.length ? upcoming.map(a=>`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;display:flex;gap:20px;align-items:center;">
+        <div style="background:var(--accent-light);color:var(--accent);border-radius:var(--radius);padding:12px 16px;text-align:center;min-width:64px;flex-shrink:0;">
+          <div style="font-size:20px;font-weight:700;line-height:1;">${new Date(a.event_requests.event_date).getDate()}</div>
+          <div style="font-size:11px;font-weight:500;">${new Date(a.event_requests.event_date+'T00:00:00').toLocaleString('default',{month:'short'})}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:15px;">${a.event_requests.event_name}</div>
+          <div class="text-muted">${a.event_requests.campuses?.name||''} · ${a.event_requests.venue||''}</div>
+          <div class="text-muted">${a.event_requests.start_time?.slice(0,5)} – ${a.event_requests.end_time?.slice(0,5)}</div>
+        </div>
+        <span class="badge badge-${a.status}">${a.status}</span>
+      </div>`).join('')
+    : '<div class="loading">No upcoming assignments.</div>'}`;
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────
+async function loadNotifications() {
+  const { data } = await db.from('notifications')
+    .select('*').eq('user_id', currentUser.id)
+    .order('created_at',{ascending:false}).limit(20);
+  const unread = (data||[]).filter(n=>!n.is_read).length;
+  document.getElementById('notifBadge').style.display = unread ? 'block' : 'none';
+  const list = document.getElementById('notifList');
+  list.innerHTML = (data||[]).length ? (data||[]).map(n=>`
+    <div class="notif-item ${n.is_read?'':'unread'}" onclick="readNotif('${n.id}',this)">
+      <div class="notif-item-title">${n.title}</div>
+      <div class="notif-item-msg">${n.message}</div>
+      <div class="notif-item-time">${new Date(n.created_at).toLocaleString()}</div>
+    </div>`).join('')
+  : '<div class="loading">No notifications.</div>';
+}
+async function readNotif(id, el) {
+  await db.from('notifications').update({is_read:true}).eq('id',id);
+  el.classList.remove('unread');
+  loadNotifications();
+}
+async function markAllRead() {
+  await db.from('notifications').update({is_read:true}).eq('user_id',currentUser.id);
+  loadNotifications();
+  showToast('All marked as read','success');
+}
+function toggleNotifPanel() {
+  document.getElementById('notifPanel').classList.toggle('open');
+  loadNotifications();
+}
+
+// ── TOAST ──────────────────────────────────────────────────
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  setTimeout(()=>{ t.className='toast'; }, 3200);
+}
+
+// ── INIT ───────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved = localStorage.getItem('campus_user');
+  if (saved) { try { currentUser=JSON.parse(saved); launchApp(); } catch(e){ localStorage.removeItem('campus_user'); } }
+});
+</script>
+</body>
+</html>
