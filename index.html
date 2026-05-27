@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoCampus — Event Photographer Management</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e2e0d8;
+  --text:#1a1916;--muted:#7a7868;--accent:#2563eb;--accent-light:#eff4ff;
+  --green:#16a34a;--green-light:#f0fdf4;--amber:#d97706;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;--purple:#7c3aed;--purple-light:#f5f3ff;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;}
+input,select,textarea{font-family:'DM Sans',sans-serif;}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--shadow-md);}
+.login-logo{font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-0.5px;}
+.login-logo span{color:var(--accent);}
+.login-sub{color:var(--muted);font-size:13px;margin-bottom:32px;}
+.login-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;}
+.login-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-field{margin-bottom:16px;}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;margin-top:8px;transition:opacity .2s;}
+.login-btn:hover{opacity:.9;}
+.login-error{background:#fef2f2;border:1px solid #fecaca;color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none;}
+
+/* APP */
+#appShell{display:none;height:100vh;overflow:hidden;}
+.shell{display:flex;height:100%;}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-logo{padding:20px 20px 16px;font-size:16px;font-weight:600;letter-spacing:-0.3px;border-bottom:1px solid var(--border);}
+.sidebar-logo span{color:var(--accent);}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid var(--border);}
+.sidebar-user-name{font-size:13px;font-weight:500;}
+.sidebar-user-role{font-size:11px;color:var(--muted);text-transform:capitalize;}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-light);color:var(--accent);}
+.sidebar-bottom{padding:12px 8px;border-top:1px solid var(--border);}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;width:100%;background:none;border:none;transition:all .15s;}
+.logout-btn:hover{background:var(--red-light);color:var(--red);}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-title{font-size:16px;font-weight:600;}
+.notif-btn{position:relative;background:none;border:none;padding:6px;color:var(--muted);font-size:18px;border-radius:8px;cursor:pointer;}
+.notif-btn:hover{background:var(--surface2);}
+.notif-badge{position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--surface);display:none;}
+.page-content{flex:1;padding:28px;}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow);}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.stat-value{font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* TABLE */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px;}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.table-title{font-size:14px;font-weight:600;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border);}
+td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.empty-row td{text-align:center;color:var(--muted);padding:28px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize;}
+.badge-pending{background:var(--amber-light);color:var(--amber);}
+.badge-approved{background:var(--green-light);color:var(--green);}
+.badge-rejected{background:var(--red-light);color:var(--red);}
+.badge-completed{background:var(--purple-light);color:var(--purple);}
+.badge-assigned{background:var(--accent-light);color:var(--accent);}
+.badge-accepted{background:var(--green-light);color:var(--green);}
+.badge-declined{background:var(--red-light);color:var(--red);}
+.badge-high{background:var(--red-light);color:var(--red);}
+.badge-urgent{background:#fff1f2;color:#e11d48;}
+.badge-medium{background:var(--amber-light);color:var(--amber);}
+.badge-low{background:var(--green-light);color:var(--green);}
+.badge-coordinator{background:var(--accent-light);color:var(--accent);}
+.badge-photographer{background:var(--green-light);color:var(--green);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;border:none;transition:all .15s;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{opacity:.9;}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:hover{opacity:.9;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{opacity:.9;}
+.btn-amber{background:var(--amber);color:#fff;}
+.btn-amber:hover{opacity:.9;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{background:var(--surface2);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* FORM */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow);max-width:700px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.form-input{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--accent);}
+.form-actions{margin-top:20px;display:flex;gap:10px;}
+.form-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.modal-actions{margin-top:20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* NOTIF PANEL */
+.notif-panel{position:fixed;top:0;right:0;width:340px;height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-md);z-index:500;transform:translateX(100%);transition:transform .25s;overflow-y:auto;}
+.notif-panel.open{transform:translateX(0);}
+.notif-panel-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-item{padding:14px 20px;border-bottom:1px solid var(--border);}
+.notif-item.unread{background:var(--accent-light);}
+.notif-item-title{font-size:13px;font-weight:500;margin-bottom:3px;}
+.notif-item-msg{font-size:12px;color:var(--muted);}
+.notif-item-time{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--muted);font-size:13px;gap:10px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.text-muted{color:var(--muted);font-size:12px;}
+.action-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.mb-3{margin-bottom:12px;}
+.section-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+
+/* CALENDAR */
+.calendar-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);margin-bottom:20px;}
+.calendar-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+/* CUSTOM CALENDAR GRID */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-nav-title{font-size:15px;font-weight:600;}
+.cal-nav-btns{display:flex;gap:6px;}
+.cal-grid{width:100%;border-collapse:collapse;table-layout:fixed;}
+.cal-grid th{padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border:1px solid var(--border);}
+.cal-grid td{padding:6px 4px;vertical-align:top;border:1px solid var(--border);cursor:pointer;min-height:80px;position:relative;transition:background .15s;}
+.cal-grid td:hover{background:#f0f4ff;}
+.cal-grid td.today{background:#eff6ff;}
+.cal-grid td.other-month{background:var(--surface2);opacity:.6;}
+.cal-date-num{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px;padding:0 2px;}
+.cal-date-num.today-num{background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.cal-event-dot{display:block;margin:1px 2px;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.cal-more{font-size:10px;color:var(--accent);padding:1px 4px;cursor:pointer;font-weight:500;}
+
+/* CONFLICT ALERT */
+.conflict-alert{background:#fff1f2;border:1px solid #fecdd3;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:#be123c;}
+.conflict-alert strong{display:block;margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Photo<span>Campus</span></div>
+    <div class="login-sub">Event Photographer Management System</div>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="loginBtn">Sign In</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Default Admin</div>
+      <div style="font-size:12px;color:var(--muted);">admin@campus.com / Admin@1234</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appShell">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sidebar-logo">Photo<span>Campus</span></div>
+      <div class="sidebar-user">
+        <div class="sidebar-user-name" id="sidebarName">—</div>
+        <div class="sidebar-user-role" id="sidebarRole">—</div>
+      </div>
+      <div class="sidebar-nav" id="sidebarNav"></div>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" onclick="doLogout()">↩ Sign out</button>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <button class="notif-btn" onclick="toggleNotifPanel()">
+          🔔<span class="notif-badge" id="notifBadge"></span>
+        </button>
+      </div>
+      <div class="page-content" id="pageContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header">
+    <div style="font-size:15px;font-weight:600;">🔔 Notifications</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+      <button id="notifCloseBtn" style="background:var(--surface2);border:1px solid var(--border);width:28px;height:28px;border-radius:6px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);">✕</button>
+    </div>
+  </div>
+  <div id="notifList"><div class="loading">No notifications.</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbx9Kz6dzSBfpy-UmDbMe_yetZsfPUVTvZverGFoQBhskPbyzFF0EyUTtl4b0wKval5K/exec';
+let currentUser = null;
+let calendarInstance = null;
+
+// ── API ───────────────────────────────────────────────────
+async function api(params) {
+  const url = API + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return await res.json();
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent='Please enter email and password.'; errEl.style.display='block'; return; }
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    const res = await api({ action:'login', email, password:pass });
+    if (res.error) { errEl.textContent = res.error; errEl.style.display='block'; }
+    else { currentUser = res.user; localStorage.setItem('pc_user', JSON.stringify(res.user)); launchApp(); }
+  } catch(e) { errEl.textContent = 'Connection error. Please try again.'; errEl.style.display='block'; }
+  btn.textContent = 'Sign In'; btn.disabled = false;
+}
+function doLogout() {
+  currentUser = null; localStorage.removeItem('pc_user');
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  if (calendarInstance) { calendarInstance.destroy(); calendarInstance = null; }
+}
+function launchApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  document.getElementById('sidebarName').textContent = currentUser.full_name;
+  document.getElementById('sidebarRole').textContent = currentUser.role;
+  // wire close button for notification panel
+  document.getElementById('notifCloseBtn').addEventListener('click', function(){ 
+    document.getElementById('notifPanel').classList.remove('open'); 
+  });
+  buildSidebar(); loadNotifications(); navigateTo('dashboard');
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────
+const NAV = {
+  admin:[
+    {id:'dashboard', icon:'📊',label:'Dashboard'},
+    {id:'calendar',  icon:'📅',label:'Events Calendar'},
+    {id:'requests',  icon:'📋',label:'All Requests'},
+    {id:'assign',    icon:'📸',label:'Assign Photographers'},
+    {id:'employees', icon:'👥',label:'Employees'},
+    {id:'campuses',  icon:'🏛️',label:'Campuses'},
+    {id:'reports',   icon:'📈',label:'Reports'},
+  ],
+  coordinator:[
+    {id:'dashboard',   icon:'📊',label:'Dashboard'},
+    {id:'new-request', icon:'➕',label:'New Request'},
+    {id:'my-requests', icon:'📋',label:'My Requests'},
+  ],
+  photographer:[
+    {id:'dashboard',  icon:'📊',label:'Dashboard'},
+    {id:'assignments',icon:'📸',label:'My Assignments'},
+    {id:'schedule',   icon:'📅',label:'My Schedule'},
+  ],
+};
+function buildSidebar() {
+  const items = NAV[currentUser.role]||[];
+  document.getElementById('sidebarNav').innerHTML = items.map(n=>
+    `<div class="nav-item" id="nav-${n.id}" onclick="navigateTo('${n.id}')">
+      <span>${n.icon}</span>${n.label}</div>`).join('');
+}
+const PAGE_TITLES = {
+  dashboard:'Dashboard',calendar:'Events Calendar',requests:'All Requests',
+  assign:'Assign Photographers',employees:'Employees',campuses:'Campuses',reports:'Reports',
+  'new-request':'New Event Request','my-requests':'My Requests',
+  assignments:'My Assignments',schedule:'My Schedule'
+};
+function navigateTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el = document.getElementById('nav-'+page);
+  if(el) el.classList.add('active');
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[page]||page;
+  if (calendarInstance && page !== 'calendar' && page !== 'dashboard') {
+    calendarInstance.destroy(); calendarInstance = null;
+  }
+  renderPage(page);
+}
+
+// ── ROUTER ────────────────────────────────────────────────
+async function renderPage(page) {
+  const c = document.getElementById('pageContent');
+  c.innerHTML = `<div class="loading"><div class="spinner"></div>Loading…</div>`;
+  try {
+    if (page==='dashboard')      await renderDashboard(c);
+    else if (page==='calendar')  await renderCalendarPage(c);
+    else if (page==='requests')  await renderRequests(c);
+    else if (page==='assign')    await renderAssign(c);
+    else if (page==='employees') await renderEmployees(c);
+    else if (page==='campuses')  await renderCampuses(c);
+    else if (page==='reports')   await renderReports(c);
+    else if (page==='new-request')  await renderNewRequest(c);
+    else if (page==='my-requests')  await renderMyRequests(c);
+    else if (page==='assignments')  await renderAssignments(c);
+    else if (page==='schedule')     await renderSchedule(c);
+  } catch(e) { c.innerHTML=`<div class="loading">Error: ${e.message}</div>`; }
+}
+
+// ── DASHBOARD (ADMIN) ─────────────────────────────────────
+async function renderDashboard(c) {
+  if (currentUser.role==='admin') {
+    const [rRes,uRes,campRes,aRes] = await Promise.all([
+      api({action:'getRequests'}), api({action:'getUsers'}),
+      api({action:'getCampuses'}), api({action:'getAssignments'}),
+    ]);
+    const reqs=rRes.data||[], users=uRes.data||[], assigns=aRes.data||[];
+    const pending   = reqs.filter(r=>r.status==='pending').length;
+    const approved  = reqs.filter(r=>r.status==='approved').length;
+    const completed = reqs.filter(r=>r.status==='completed').length;
+    const photographers = users.filter(u=>u.role==='photographer').length;
+    // completed assignments by photographers
+    const completedAssigns = assigns.filter(a=>a.status==='completed').length;
+    // detect conflicts
+    const conflicts = detectConflicts(reqs);
+
+    c.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value" style="color:var(--amber)">${pending}</div><div class="stat-sub">Awaiting review</div></div>
+        <div class="stat-card"><div class="stat-label">Approved Events</div><div class="stat-value" style="color:var(--green)">${approved}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed Events</div><div class="stat-value" style="color:var(--purple)">${completed}</div><div class="stat-sub">Requests done</div></div>
+        <div class="stat-card"><div class="stat-label">Tasks Completed</div><div class="stat-value" style="color:var(--green)">${completedAssigns}</div><div class="stat-sub">By photographers</div></div>
+        <div class="stat-card"><div class="stat-label">Photographers</div><div class="stat-value" style="color:var(--accent)">${photographers}</div></div>
+        <div class="stat-card"><div class="stat-label">Campuses</div><div class="stat-value">${(campRes.data||[]).length}</div></div>
+      </div>
+      ${conflicts.length?`<div class="conflict-alert">
+        <strong>⚠️ ${conflicts.length} Time Conflict${conflicts.length>1?'s':''} Detected</strong>
+        ${conflicts.map(c=>`• "${c.a}" and "${c.b}" on ${c.date} overlap (${c.campus_a} vs ${c.campus_b})`).join('<br>')}
+        <div style="margin-top:8px;"><button class="btn btn-sm btn-danger" onclick="navigateTo('requests')">Review Conflicts →</button></div>
+      </div>`:''}
+      <div class="calendar-card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">📅 Events Calendar</div>
+        <div class="calendar-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div>Pending</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div>Approved</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>Completed</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Rejected / Conflict</div>
+        </div>
+        <div id="dashCal"></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Recent Requests</div>
+          <button class="btn btn-primary btn-sm" onclick="navigateTo('requests')">View All</button>
+        </div>
+        ${buildRequestTable(reqs.slice(0,5), true)}
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">✅ Completed Assignments by Photographers</div></div>
+        ${buildCompletedAssignTable(assigns.filter(a=>a.status==='completed'))}
+      </div>`;
+    // render mini calendar
+    setTimeout(()=>{ renderCustomCalendar('dashCal', reqs, conflicts); }, 100);
+
+  } else if (currentUser.role==='coordinator') {
+    const {data:reqs=[]} = await api({action:'getRequests', requested_by:currentUser.id});
+    c.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value">${reqs.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${reqs.filter(r=>r.status==='pending').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--green)">${reqs.filter(r=>r.status==='approved').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${reqs.filter(r=>r.status==='completed').length}</div></div>
+      </div>
+      <div style="margin-top:8px;"><button class="btn btn-primary" onclick="navigateTo('new-request')">➕ Submit New Request</button></div>`;
+  } else {
+    const {data:assigns=[]} = await api({action:'getAssignments', photographer_id:currentUser.id});
+    c.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Assignments</div><div class="stat-value">${assigns.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Response</div><div class="stat-value" style="color:var(--amber)">${assigns.filter(a=>a.status==='assigned').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Accepted</div><div class="stat-value" style="color:var(--green)">${assigns.filter(a=>a.status==='accepted').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${assigns.filter(a=>a.status==='completed').length}</div></div>
+      </div>`;
+  }
+}
+
+// ── CONFLICT DETECTION ────────────────────────────────────
+function detectConflicts(reqs) {
+  const conflicts = [];
+  const active = reqs.filter(r=>r.status==='pending'||r.status==='approved');
+  for (let i=0; i<active.length; i++) {
+    for (let j=i+1; j<active.length; j++) {
+      const a=active[i], b=active[j];
+      if (a.event_date !== b.event_date) continue;
+      if (a.start_time < b.end_time && a.end_time > b.start_time) {
+        conflicts.push({
+          a: a.event_name, b: b.event_name,
+          date: a.event_date,
+          campus_a: a.campus_name||'Campus A',
+          campus_b: b.campus_name||'Campus B',
+          id_a: a.id, id_b: b.id,
+          time_a: `${a.start_time}–${a.end_time}`,
+          time_b: `${b.start_time}–${b.end_time}`,
+        });
+      }
+    }
+  }
+  return conflicts;
+}
+
+// ── CALENDAR ──────────────────────────────────────────────
+function statusColor(status) {
+  if (status==='pending')   return '#d97706';
+  if (status==='approved')  return '#16a34a';
+  if (status==='completed') return '#7c3aed';
+  if (status==='rejected')  return '#dc2626';
+  return '#6b7280';
+}
+
+let _calState = { year: new Date().getFullYear(), month: new Date().getMonth(), reqs: [], conflicts: [] };
+
+function renderCustomCalendar(elId, reqs, conflicts) {
+  window._calReqs = reqs;
+  const conflictIds = new Set();
+  conflicts.forEach(c=>{ conflictIds.add(c.id_a); conflictIds.add(c.id_b); });
+  window._calConflictIds = conflictIds;
+  _calState.reqs = reqs;
+  _calState.conflicts = conflicts;
+  _calState.conflictIds = conflictIds;
+  drawCalendar(elId);
+}
+
+function drawCalendar(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const { year, month, reqs, conflictIds } = _calState;
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  // Build date → requests map
+  const reqsByDate = {};
+  reqs.forEach(r => {
+    if (!r.event_date) return;
+    if (!reqsByDate[r.event_date]) reqsByDate[r.event_date] = [];
+    reqsByDate[r.event_date].push(r);
+  });
+
+  let html = '<div class="cal-nav">'
+    + '<div class="cal-nav-title">' + monthNames[month] + ' ' + year + '</div>'
+    + '<div class="cal-nav-btns">'
+    + '<button class="btn btn-ghost btn-sm" onclick="calNav(-1,''+elId+'')">◀ Prev</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="calNavToday(''+elId+'')">Today</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="calNav(1,''+elId+'')">Next ▶</button>'
+    + '</div></div>';
+
+  html += '<table class="cal-grid"><thead><tr>';
+  dayNames.forEach(d => { html += '<th>' + d + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  let day = 1;
+  let nextMonthDay = 1;
+  for (let row = 0; row < 6; row++) {
+    if (day > daysInMonth) break;
+    html += '<tr>';
+    for (let col = 0; col < 7; col++) {
+      const cellIndex = row * 7 + col;
+      let dateStr = '', isOther = false, isToday = false;
+      let displayNum = '';
+
+      if (cellIndex < firstDay) {
+        // prev month
+        const prevDay = daysInPrevMonth - firstDay + cellIndex + 1;
+        const prevMonth = month === 0 ? 12 : month;
+        const prevYear = month === 0 ? year - 1 : year;
+        dateStr = prevYear + '-' + String(prevMonth).padStart(2,'0') + '-' + String(prevDay).padStart(2,'0');
+        displayNum = prevDay;
+        isOther = true;
+      } else if (day > daysInMonth) {
+        // next month
+        const nextMonth = month === 11 ? 1 : month + 2;
+        const nextYear = month === 11 ? year + 1 : year;
+        dateStr = nextYear + '-' + String(nextMonth).padStart(2,'0') + '-' + String(nextMonthDay).padStart(2,'0');
+        displayNum = nextMonthDay;
+        nextMonthDay++;
+        isOther = true;
+      } else {
+        dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+        displayNum = day;
+        isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+        day++;
+      }
+
+      const dayReqs = reqsByDate[dateStr] || [];
+      const hasConflict = dayReqs.some(r => conflictIds && conflictIds.has(r.id));
+      const tdClass = (isOther ? 'other-month' : '') + (isToday ? ' today' : '') + (hasConflict ? ' has-conflict' : '');
+
+      html += '<td class="' + tdClass + '" onclick="handleCalDateClick(\'' + dateStr + '\')">';
+      html += '<div class="cal-date-num' + (isToday ? ' today-num' : '') + '">' + displayNum + '</div>';
+
+      const maxShow = 2;
+      dayReqs.slice(0, maxShow).forEach(r => {
+        const bg = (conflictIds && conflictIds.has(r.id)) ? '#dc2626' : statusColor(r.status);
+        html += '<span class="cal-event-dot" style="background:' + bg + '" '
+          + 'onclick="event.stopPropagation();handleCalDateClick(\'' + dateStr + '\')" '
+          + 'title="' + r.event_name + '">' + r.event_name + '</span>';
+      });
+      if (dayReqs.length > maxShow) {
+        html += '<div class="cal-more" onclick="event.stopPropagation();handleCalDateClick(\'' + dateStr + '\')">+' + (dayReqs.length - maxShow) + ' more</div>';
+      }
+      html += '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function calNav(dir, elId) {
+  _calState.month += dir;
+  if (_calState.month > 11) { _calState.month = 0; _calState.year++; }
+  if (_calState.month < 0)  { _calState.month = 11; _calState.year--; }
+  drawCalendar(elId);
+}
+function calNavToday(elId) {
+  _calState.month = new Date().getMonth();
+  _calState.year  = new Date().getFullYear();
+  drawCalendar(elId);
+}
+
+function handleCalDateClick(dateStr) {
+  showDateModal(dateStr);
+}
+
+function showDateModal(dateStr) {
+  const reqs = window._calReqs || [];
+  const conflictIds = window._calConflictIds || new Set();
+  const dayReqs = reqs.filter(r => r.event_date === dateStr);
+  const existing = document.getElementById('dateModal');
+  if (existing) existing.remove();
+
+  const displayDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-IN', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+  const totalNeeded = dayReqs.filter(r=>r.status!=='rejected').reduce((s,r)=>s+(parseInt(r.photographers_needed)||1), 0);
+  const conflictCount = dayReqs.filter(r=>conflictIds.has(r.id)).length;
+
+  const m = document.createElement('div');
+  m.className = 'modal-overlay'; m.id = 'dateModal';
+
+  let inner = '<div class="modal" style="max-width:660px;max-height:85vh;overflow-y:auto;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">'
+    + '<div style="font-size:16px;font-weight:600;">📅 ' + displayDate + '</div>'
+    + '<button onclick="document.getElementById('dateModal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:2px 8px;border-radius:6px;">✕</button>'
+    + '</div>';
+
+  if (dayReqs.length === 0) {
+    inner += '<div style="text-align:center;padding:40px 20px;color:var(--muted);">'
+      + '<div style="font-size:40px;margin-bottom:12px;">📭</div>'
+      + '<div style="font-size:14px;font-weight:500;">No event requests on this date</div>'
+      + '<div style="font-size:12px;margin-top:4px;">Campus coordinators have not submitted any requests for this day.</div>'
+      + '</div>';
+  } else {
+    // Summary cards
+    inner += '<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">'
+      + '<div style="flex:1;min-width:100px;background:var(--accent-light);color:var(--accent);border-radius:var(--radius);padding:12px 16px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:700;line-height:1;">' + dayReqs.length + '</div>'
+      + '<div style="font-size:11px;font-weight:500;margin-top:3px;">Total Events</div></div>'
+      + '<div style="flex:1;min-width:100px;background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:12px 16px;text-align:center;">'
+      + '<div style="font-size:22px;font-weight:700;line-height:1;">' + totalNeeded + '</div>'
+      + '<div style="font-size:11px;font-weight:500;margin-top:3px;">Photographers Needed</div></div>'
+      + (conflictCount > 0
+        ? '<div style="flex:1;min-width:100px;background:var(--red-light);color:var(--red);border-radius:var(--radius);padding:12px 16px;text-align:center;">'
+          + '<div style="font-size:22px;font-weight:700;line-height:1;">⚠️ ' + conflictCount + '</div>'
+          + '<div style="font-size:11px;font-weight:500;margin-top:3px;">Conflicts</div></div>'
+        : '<div style="flex:1;min-width:100px;background:var(--green-light);color:var(--green);border-radius:var(--radius);padding:12px 16px;text-align:center;">'
+          + '<div style="font-size:22px;font-weight:700;line-height:1;">✓</div>'
+          + '<div style="font-size:11px;font-weight:500;margin-top:3px;">No Conflicts</div></div>')
+      + '</div>';
+
+    // Event cards — Windows card style
+    dayReqs.forEach(function(r) {
+      const isC = conflictIds.has(r.id);
+      const borderColor = isC ? '#fca5a5' : 'var(--border)';
+      const leftColor = isC ? '#dc2626' : statusColor(r.status);
+      inner += '<div style="border:1px solid ' + borderColor + ';border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);">'
+        // Colored left bar like Windows notification card
+        + '<div style="display:flex;">'
+        + '<div style="width:5px;background:' + leftColor + ';flex-shrink:0;"></div>'
+        + '<div style="flex:1;padding:14px 16px;">'
+        // Card header
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;">'
+        + '<div>'
+        + '<div style="font-weight:600;font-size:14px;">' + (isC ? '⚠️ ' : '') + r.event_name + '</div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + (r.event_type||'') + (r.campus_name ? ' · ' + r.campus_name : '') + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:5px;flex-shrink:0;">'
+        + '<span class="badge badge-' + r.status + '">' + r.status + '</span>'
+        + '<span class="badge badge-' + (r.priority||'medium') + '">' + (r.priority||'medium') + '</span>'
+        + '</div>'
+        + '</div>'
+        // Info grid
+        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px;background:var(--surface2);border-radius:8px;padding:10px;">'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Time</div><div style="font-weight:500;">' + (r.start_time||'—') + ' – ' + (r.end_time||'—') + '</div></div>'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Venue</div><div style="font-weight:500;">' + (r.venue||'—') + '</div></div>'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Photographers</div><div style="font-weight:500;">' + (r.photographers_needed||1) + ' needed</div></div>'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Campus</div><div style="font-weight:500;">' + (r.campus_name||'—') + '</div></div>'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Requested By</div><div style="font-weight:500;">' + (r.requester_name||'—') + '</div></div>'
+        + '<div><div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Event Type</div><div style="font-weight:500;">' + (r.event_type||'—') + '</div></div>'
+        + '</div>'
+        + (r.notes ? '<div style="margin-top:8px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:flex-start;">📝 <span>' + r.notes + '</span></div>' : '')
+        + (isC ? '<div style="margin-top:8px;background:var(--red-light);color:var(--red);border-radius:6px;padding:6px 10px;font-size:12px;">⚠️ Time conflict detected with another campus request on this date.</div>' : '')
+        // Action buttons
+        + (r.status==='pending' ? '<div style="margin-top:10px;display:flex;gap:6px;">'
+          + '<button class="btn btn-success btn-sm" onclick="dateModalAction('' + r.id + '','approved','' + (r.requested_by||'') + '','' + r.event_name.replace(/'/g,"\'") + '')">✓ Approve</button>'
+          + '<button class="btn btn-danger btn-sm" onclick="dateModalAction('' + r.id + '','rejected','' + (r.requested_by||'') + '','' + r.event_name.replace(/'/g,"\'") + '')">✗ Reject</button>'
+          + '</div>' : '')
+        + '</div></div></div>';
+    });
+  }
+
+  inner += '<div style="margin-top:16px;display:flex;justify-content:flex-end;">'
+    + '<button class="btn btn-ghost" onclick="document.getElementById('dateModal').remove()">Close</button>'
+    + '</div></div>';
+
+  m.innerHTML = inner;
+  document.body.appendChild(m);
+  m.addEventListener('click', function(e){ if(e.target===m) m.remove(); });
+}
+
+async function dateModalAction(id, status, requestedBy, eventName) {
+  document.getElementById('dateModal') && document.getElementById('dateModal').remove();
+  const res = await api({action:'updateRequest', id, status});
+  if (res.error) { showToast('Error: '+res.error,'error'); return; }
+  if (requestedBy) await api({action:'addNotification', user_id:requestedBy, title:'Request '+status, message:'Your request "'+eventName+'" has been '+status+' by admin.'});
+  showToast('Request '+status,'success');
+  const calActive = document.getElementById('nav-calendar') && document.getElementById('nav-calendar').classList.contains('active');
+  await renderPage(calActive ? 'calendar' : 'dashboard');
+}
+
+async function calAction(id, status, requestedBy, eventName) {
+  document.getElementById('eventModal') && document.getElementById('eventModal').remove();
+  const res = await api({action:'updateRequest', id, status});
+  if (res.error) { showToast('Error: '+res.error,'error'); return; }
+  if (requestedBy) await api({action:'addNotification', user_id:requestedBy, title:'Request '+status, message:'Your request "'+eventName+'" has been '+status+' by admin.'});
+  showToast('Request '+status,'success');
+  await renderPage('dashboard');
+}
+
+// ── CALENDAR PAGE (full) ──────────────────────────────────
+
+async function renderCalendarPage(c) {
+  const {data:reqs=[]} = await api({action:'getRequests'});
+  const conflicts = detectConflicts(reqs);
+  c.innerHTML=`
+    ${conflicts.length?`<div class="conflict-alert">
+      <strong>⚠️ ${conflicts.length} Time Conflict${conflicts.length>1?'s':''} Detected</strong>
+      ${conflicts.map(cf=>`• "${cf.a}" (${cf.campus_a}, ${cf.time_a}) conflicts with "${cf.b}" (${cf.campus_b}, ${cf.time_b}) on ${cf.date}`).join('<br>')}
+    </div>`:'<div style="background:var(--green-light);border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--green);">✅ No time conflicts detected</div>'}
+    <div class="calendar-card">
+      <div class="calendar-legend" style="margin-bottom:14px;">
+        <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div>Pending</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div>Approved</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>Completed</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Rejected / Conflict</div>
+        <div style="margin-left:auto;font-size:12px;color:var(--muted);">Click any event to approve, reject or view details</div>
+      </div>
+      <div id="fullCal"></div>
+    </div>`;
+  setTimeout(()=>{ renderCustomCalendar('fullCal', reqs, conflicts); }, 100);
+}
+
+// ── COMPLETED ASSIGNMENTS TABLE ───────────────────────────
+function buildCompletedAssignTable(assigns) {
+  if (!assigns.length) return `<table><tr class="empty-row"><td colspan="4">No completed assignments yet.</td></tr></table>`;
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Event</th><th>Photographer</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>${assigns.map(a=>`<tr>
+      <td style="font-weight:500">${a.event_name||'—'}</td>
+      <td>${a.photographer_name||'—'}</td>
+      <td>${a.event_date||'—'}</td>
+      <td><span class="badge badge-completed">completed</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ── REQUESTS ──────────────────────────────────────────────
+function buildRequestTable(rows, showActions) {
+  if (!rows.length) return `<table><tr class="empty-row"><td colspan="7">No requests found.</td></tr></table>`;
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Event</th><th>Campus</th><th>Date</th><th>Priority</th><th>Status</th><th>Requested By</th>${showActions?'<th>Actions</th>':''}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><div style="font-weight:500">${r.event_name}</div><div class="text-muted">${r.event_type||''}</div></td>
+      <td>${r.campus_name||'—'}</td>
+      <td>${r.event_date}<div class="text-muted">${r.start_time||''}–${r.end_time||''}</div></td>
+      <td><span class="badge badge-${r.priority||'medium'}">${r.priority||'medium'}</span></td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td>${r.requester_name||'—'}</td>
+      ${showActions?`<td><div class="action-btns">${r.status==='pending'?`
+        <button class="btn btn-success btn-sm" onclick="updateReqStatus('${r.id}','approved','${r.requested_by||''}','${r.event_name.replace(/'/g,"\\'")}')">Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="updateReqStatus('${r.id}','rejected','${r.requested_by||''}','${r.event_name.replace(/'/g,"\\'")}')">Reject</button>
+      `:'<span class="text-muted">—</span>'}</div></td>`:''}
+    </tr>`).join('')}</tbody></table></div>`;
+}
+async function renderRequests(c) {
+  const {data:reqs=[]} = await api({action:'getRequests'});
+  const conflicts = detectConflicts(reqs);
+  window._allReqs = reqs;
+  c.innerHTML=`
+    ${conflicts.length?`<div class="conflict-alert">
+      <strong>⚠️ ${conflicts.length} conflict${conflicts.length>1?'s':''} found</strong>
+      ${conflicts.map(cf=>`• "${cf.a}" and "${cf.b}" overlap on ${cf.date}`).join('<br>')}
+    </div>`:''}
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Requests (${reqs.length})</div>
+        <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="filterReqs(this.value)">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option><option value="approved">Approved</option>
+          <option value="rejected">Rejected</option><option value="completed">Completed</option>
+        </select>
+      </div>
+      <div id="reqWrap">${buildRequestTable(reqs, true)}</div>
+    </div>`;
+}
+function filterReqs(status) {
+  const filtered = status ? window._allReqs.filter(r=>r.status===status) : window._allReqs;
+  document.getElementById('reqWrap').innerHTML = buildRequestTable(filtered, true);
+}
+async function updateReqStatus(id, status, requestedBy, eventName) {
+  const res = await api({action:'updateRequest', id, status});
+  if (res.error) { showToast('Error: '+res.error,'error'); return; }
+  showToast(`Request ${status}`,'success');
+  if (requestedBy) await api({action:'addNotification', user_id:requestedBy, title:`Request ${status}`, message:`Your request "${eventName}" has been ${status} by admin.`});
+  await renderRequests(document.getElementById('pageContent'));
+}
+
+// ── ASSIGN ────────────────────────────────────────────────
+async function renderAssign(c) {
+  const [{data:reqs=[]},{data:users=[]},{data:assigns=[]}] = await Promise.all([
+    api({action:'getRequests',status:'approved'}),
+    api({action:'getUsers'}),
+    api({action:'getAssignments'}),
+  ]);
+  const photos = users.filter(u=>u.role==='photographer');
+  c.innerHTML=`
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Approved Events — Assign Photographers</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Event</th><th>Campus</th><th>Date & Time</th><th>Need</th><th>Assign</th></tr></thead>
+        <tbody>${reqs.length?reqs.map(r=>`<tr>
+          <td><div style="font-weight:500">${r.event_name}</div><div class="text-muted">${r.venue||''}</div></td>
+          <td>${r.campus_name||'—'}</td>
+          <td>${r.event_date}<div class="text-muted">${r.start_time||''}–${r.end_time||''}</div></td>
+          <td>${r.photographers_needed||1}</td>
+          <td>
+            <select class="form-input" id="asel-${r.id}" style="padding:5px 8px;font-size:12px;min-width:160px;">
+              <option value="">Select photographer</option>
+              ${photos.map(p=>`<option value="${p.id}">${p.full_name}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary btn-sm" style="margin-top:4px;" onclick="doAssign('${r.id}','${r.event_name.replace(/'/g,"\\'")}','${r.event_date}')">Assign</button>
+          </td>
+        </tr>`).join(''):'<tr class="empty-row"><td colspan="5">No approved events pending assignment.</td></tr>'}
+        </tbody></table></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Assignments</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Event</th><th>Photographer</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>${assigns.length?assigns.map(a=>`<tr>
+          <td>${a.event_name||'—'}</td><td>${a.photographer_name||'—'}</td>
+          <td>${a.event_date||'—'}</td><td><span class="badge badge-${a.status}">${a.status}</span></td>
+        </tr>`).join(''):'<tr class="empty-row"><td colspan="4">No assignments yet.</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+async function doAssign(requestId, eventName, eventDate) {
+  const sel = document.getElementById('asel-'+requestId);
+  const photographerId = sel.value;
+  if (!photographerId) { showToast('Please select a photographer','error'); return; }
+  const res = await api({action:'addAssignment', request_id:requestId, photographer_id:photographerId, assigned_by:currentUser.id});
+  if (res.error) { showToast(res.error,'error'); return; }
+  const {data:users=[]} = await api({action:'getUsers'});
+  const photo = users.find(u=>u.id===photographerId);
+  await api({action:'addNotification', user_id:photographerId, title:'New Assignment', message:`You have been assigned to "${eventName}" on ${eventDate}.`});
+  showToast(`${photo?.full_name||'Photographer'} assigned!`,'success');
+  await renderAssign(document.getElementById('pageContent'));
+}
+
+// ── EMPLOYEES ─────────────────────────────────────────────
+async function renderEmployees(c) {
+  const {data:users=[]} = await api({action:'getUsers'});
+  c.innerHTML=`
+    <div style="margin-bottom:16px;display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="showAddEmpModal()">➕ Add Employee</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Employees (${users.length})</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>${users.length?users.map(u=>`<tr>
+          <td style="font-weight:500">${u.full_name}</td><td>${u.email}</td>
+          <td><span class="badge badge-${u.role}">${u.role}</span></td>
+          <td>${u.phone||'—'}</td>
+          <td><span class="badge badge-${String(u.is_active).toUpperCase()==='TRUE'?'approved':'rejected'}">${String(u.is_active).toUpperCase()==='TRUE'?'Active':'Inactive'}</span></td>
+          <td><button class="btn btn-ghost btn-sm" onclick="toggleUser('${u.id}')">${String(u.is_active).toUpperCase()==='TRUE'?'Deactivate':'Activate'}</button></td>
+        </tr>`).join(''):'<tr class="empty-row"><td colspan="6">No employees yet.</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+function showAddEmpModal() {
+  const m=document.createElement('div'); m.className='modal-overlay'; m.id='empModal';
+  m.innerHTML=`<div class="modal">
+    <div class="modal-title">Add New Employee</div>
+    <div class="form-group mb-3"><label class="form-label">Full Name *</label><input class="form-input" id="eName" placeholder="Full name"></div>
+    <div class="form-group mb-3"><label class="form-label">Email *</label><input class="form-input" id="eEmail" type="email" placeholder="email@campus.com"></div>
+    <div class="form-group mb-3"><label class="form-label">Password *</label><input class="form-input" id="ePass" placeholder="Set password"></div>
+    <div class="form-group mb-3"><label class="form-label">Role</label>
+      <select class="form-input" id="eRole"><option value="photographer">Photographer</option><option value="coordinator">Coordinator</option></select>
+    </div>
+    <div class="form-group mb-3"><label class="form-label">Phone</label><input class="form-input" id="ePhone" placeholder="Phone number"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('empModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Add Employee</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function saveEmployee() {
+  const name=document.getElementById('eName').value.trim();
+  const email=document.getElementById('eEmail').value.trim();
+  const pass=document.getElementById('ePass').value.trim();
+  const role=document.getElementById('eRole').value;
+  const phone=document.getElementById('ePhone').value.trim();
+  if(!name||!email||!pass){showToast('Name, email and password required','error');return;}
+  const res=await api({action:'addUser',full_name:name,email,password:pass,role,phone});
+  if(res.error){showToast(res.error,'error');return;}
+  document.getElementById('empModal').remove();
+  showToast('Employee added!','success');
+  await renderEmployees(document.getElementById('pageContent'));
+}
+async function toggleUser(id) {
+  await api({action:'toggleUser',id});
+  showToast('User status updated','success');
+  await renderEmployees(document.getElementById('pageContent'));
+}
+
+// ── CAMPUSES ──────────────────────────────────────────────
+async function renderCampuses(c) {
+  const {data:camps=[]} = await api({action:'getCampuses'});
+  c.innerHTML=`
+    <div style="margin-bottom:16px;display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="showAddCampusModal()">➕ Add Campus</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Campuses (${camps.length})</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Campus Name</th><th>Location</th><th>Actions</th></tr></thead>
+        <tbody>${camps.length?camps.map(camp=>`<tr>
+          <td style="font-weight:500">${camp.name}</td><td>${camp.location||'—'}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="deleteCampus('${camp.id}')">Delete</button></td>
+        </tr>`).join(''):'<tr class="empty-row"><td colspan="3">No campuses yet. Add your 22 campuses!</td></tr>'}
+        </tbody></table></div>
+    </div>`;
+}
+function showAddCampusModal() {
+  const m=document.createElement('div'); m.className='modal-overlay'; m.id='campModal';
+  m.innerHTML=`<div class="modal">
+    <div class="modal-title">Add New Campus</div>
+    <div class="form-group mb-3"><label class="form-label">Campus Name *</label><input class="form-input" id="cName" placeholder="e.g. Main Campus"></div>
+    <div class="form-group mb-3"><label class="form-label">Location / City</label><input class="form-input" id="cLoc" placeholder="e.g. Mumbai"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('campModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCampus()">Add Campus</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function saveCampus() {
+  const name=document.getElementById('cName').value.trim();
+  const loc=document.getElementById('cLoc').value.trim();
+  if(!name){showToast('Campus name required','error');return;}
+  const res=await api({action:'addCampus',name,location:loc});
+  if(res.error){showToast(res.error,'error');return;}
+  document.getElementById('campModal').remove();
+  showToast('Campus added!','success');
+  await renderCampuses(document.getElementById('pageContent'));
+}
+async function deleteCampus(id) {
+  if(!confirm('Delete this campus?'))return;
+  await api({action:'deleteCampus',id});
+  showToast('Campus deleted','success');
+  await renderCampuses(document.getElementById('pageContent'));
+}
+
+// ── REPORTS ───────────────────────────────────────────────
+async function renderReports(c) {
+  const [{data:reqs=[]},{data:assigns=[]}] = await Promise.all([
+    api({action:'getRequests'}), api({action:'getAssignments'}),
+  ]);
+  const total=reqs.length,pending=reqs.filter(r=>r.status==='pending').length,
+    approved=reqs.filter(r=>r.status==='approved').length,
+    completed=reqs.filter(r=>r.status==='completed').length,
+    rejected=reqs.filter(r=>r.status==='rejected').length;
+  const campStats={}, empStats={};
+  reqs.forEach(r=>{const n=r.campus_name||'Unknown';campStats[n]=(campStats[n]||0)+1;});
+  assigns.forEach(a=>{const n=a.photographer_name||'Unknown';empStats[n]=(empStats[n]||0)+1;});
+  const completedAssigns = assigns.filter(a=>a.status==='completed');
+  c.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--green)">${approved}</div></div>
+      <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--purple)">${completed}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" style="color:var(--red)">${rejected}</div></div>
+      <div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value" style="color:var(--green)">${completedAssigns.length}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Requests by Campus</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Campus</th><th>Requests</th></tr></thead>
+          <tbody>${Object.entries(campStats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')||'<tr class="empty-row"><td colspan="2">No data.</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><div class="table-title">Workload by Photographer</div></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Photographer</th><th>Assignments</th></tr></thead>
+          <tbody>${Object.entries(empStats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')||'<tr class="empty-row"><td colspan="2">No data.</td></tr>'}</tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">✅ Completed Assignments</div></div>
+      ${buildCompletedAssignTable(completedAssigns)}
+    </div>`;
+}
+
+// ── NEW REQUEST ───────────────────────────────────────────
+async function renderNewRequest(c) {
+  const {data:camps=[]} = await api({action:'getCampuses'});
+  c.innerHTML=`<div class="form-card">
+    <div class="form-title">Submit New Event Request</div>
+    <div class="form-grid">
+      <div class="form-group full"><label class="form-label">Event Name *</label><input class="form-input" id="evName" placeholder="e.g. Annual Sports Day"></div>
+      <div class="form-group"><label class="form-label">Event Type</label>
+        <select class="form-input" id="evType">
+          <option>Sports</option><option>Cultural</option><option>Academic</option><option>Seminar</option><option>Convocation</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Campus</label>
+        <select class="form-input" id="evCampus">
+          <option value="">Select campus</option>
+          ${camps.map(cp=>`<option value="${cp.id}">${cp.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Priority</label>
+        <select class="form-input" id="evPriority">
+          <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Event Date *</label><input class="form-input" id="evDate" type="date"></div>
+      <div class="form-group"><label class="form-label">Start Time *</label><input class="form-input" id="evStart" type="time"></div>
+      <div class="form-group"><label class="form-label">End Time *</label><input class="form-input" id="evEnd" type="time"></div>
+      <div class="form-group"><label class="form-label">Venue</label><input class="form-input" id="evVenue" placeholder="e.g. Main Auditorium"></div>
+      <div class="form-group"><label class="form-label">Photographers Needed</label><input class="form-input" id="evCount" type="number" min="1" max="10" value="1"></div>
+      <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-input" id="evNotes" rows="3" placeholder="Any special requirements…"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitRequest()">Submit Request</button>
+      <button class="btn btn-ghost" onclick="navigateTo('dashboard')">Cancel</button>
+    </div>
+  </div>`;
+  document.getElementById('evDate').setAttribute('min', new Date().toISOString().slice(0,10));
+}
+async function submitRequest() {
+  const name=document.getElementById('evName').value.trim();
+  const date=document.getElementById('evDate').value;
+  const start=document.getElementById('evStart').value;
+  const end=document.getElementById('evEnd').value;
+  if(!name||!date||!start||!end){showToast('Please fill all required fields','error');return;}
+  if(start>=end){showToast('End time must be after start time','error');return;}
+  const res=await api({
+    action:'addRequest',event_name:name,
+    event_type:document.getElementById('evType').value,
+    campus_id:document.getElementById('evCampus').value,
+    priority:document.getElementById('evPriority').value,
+    event_date:date,start_time:start,end_time:end,
+    venue:document.getElementById('evVenue').value.trim(),
+    photographers_needed:document.getElementById('evCount').value,
+    notes:document.getElementById('evNotes').value.trim(),
+    requested_by:currentUser.id,
+  });
+  if(res.error){showToast('Error: '+res.error,'error');return;}
+  showToast('Request submitted!','success');
+  navigateTo('my-requests');
+}
+
+// ── MY REQUESTS ───────────────────────────────────────────
+async function renderMyRequests(c) {
+  const {data:reqs=[]} = await api({action:'getRequests', requested_by:currentUser.id});
+  c.innerHTML=`<div class="table-card">
+    <div class="table-header"><div class="table-title">My Requests (${reqs.length})</div>
+      <button class="btn btn-primary btn-sm" onclick="navigateTo('new-request')">➕ New Request</button>
+    </div>
+    ${buildRequestTable(reqs, false)}
+  </div>`;
+}
+
+// ── ASSIGNMENTS ───────────────────────────────────────────
+async function renderAssignments(c) {
+  const {data:assigns=[]} = await api({action:'getAssignments', photographer_id:currentUser.id});
+  c.innerHTML=`<div class="table-card">
+    <div class="table-header"><div class="table-title">My Assignments (${assigns.length})</div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Event</th><th>Campus</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${assigns.length?assigns.map(a=>`<tr>
+        <td><div style="font-weight:500">${a.event_name||'—'}</div><div class="text-muted">${a.venue||''}</div></td>
+        <td>${a.campus_name||'—'}</td>
+        <td>${a.event_date||'—'}<div class="text-muted">${a.start_time||''}–${a.end_time||''}</div></td>
+        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+        <td><div class="action-btns">
+          ${a.status==='assigned'?`
+            <button class="btn btn-success btn-sm" onclick="respondAssign('${a.id}','accepted')">Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="respondAssign('${a.id}','declined')">Decline</button>
+          `:a.status==='accepted'?`
+            <button class="btn btn-primary btn-sm" onclick="respondAssign('${a.id}','completed')">Mark Done</button>
+          `:'<span class="text-muted">—</span>'}
+        </div></td>
+      </tr>`).join(''):'<tr class="empty-row"><td colspan="5">No assignments yet.</td></tr>'}
+      </tbody></table></div>
+  </div>`;
+}
+async function respondAssign(id, status) {
+  const res=await api({action:'updateAssignment',id,status});
+  if(res.error){showToast('Error: '+res.error,'error');return;}
+  showToast(`Marked as ${status}`,'success');
+  await renderAssignments(document.getElementById('pageContent'));
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────
+async function renderSchedule(c) {
+  const {data:assigns=[]} = await api({action:'getAssignments', photographer_id:currentUser.id});
+  const today=new Date().toISOString().slice(0,10);
+  const upcoming=assigns.filter(a=>a.event_date>=today&&(a.status==='accepted'||a.status==='assigned'));
+  c.innerHTML=`<div class="section-title">Upcoming Schedule</div>
+    ${upcoming.length?upcoming.map(a=>`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;display:flex;gap:20px;align-items:center;">
+        <div style="background:var(--accent-light);color:var(--accent);border-radius:var(--radius);padding:12px 16px;text-align:center;min-width:64px;flex-shrink:0;">
+          <div style="font-size:20px;font-weight:700;line-height:1;">${new Date(a.event_date+'T00:00:00').getDate()}</div>
+          <div style="font-size:11px;font-weight:500;">${new Date(a.event_date+'T00:00:00').toLocaleString('default',{month:'short'})}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:15px;">${a.event_name}</div>
+          <div class="text-muted">${a.campus_name||''} · ${a.venue||''}</div>
+          <div class="text-muted">${a.start_time||''} – ${a.end_time||''}</div>
+        </div>
+        <span class="badge badge-${a.status}">${a.status}</span>
+      </div>`).join('')
+    :'<div class="loading">No upcoming assignments.</div>'}`;
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────
+async function loadNotifications() {
+  const {data:notifs=[]} = await api({action:'getNotifications', user_id:currentUser.id});
+  const unread=notifs.filter(n=>String(n.is_read).toUpperCase()!=='TRUE').length;
+  document.getElementById('notifBadge').style.display=unread?'block':'none';
+  document.getElementById('notifList').innerHTML=notifs.length?notifs.map(n=>`
+    <div class="notif-item ${String(n.is_read).toUpperCase()!=='TRUE'?'unread':''}">
+      <div class="notif-item-title">${n.title}</div>
+      <div class="notif-item-msg">${n.message}</div>
+      <div class="notif-item-time">${n.created_at||''}</div>
+    </div>`).join(''):'<div class="loading">No notifications.</div>';
+}
+async function markAllRead() {
+  await api({action:'markAllRead',user_id:currentUser.id});
+  showToast('All marked as read','success'); loadNotifications();
+}
+function toggleNotifPanel() {
+  document.getElementById('notifPanel').classList.toggle('open');
+  loadNotifications();
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg,type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',3200);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved=localStorage.getItem('pc_user');
+  if(saved){try{currentUser=JSON.parse(saved);launchApp();}catch(e){localStorage.removeItem('pc_user');}}
+});
+</script>
+</body>
+</html>
